@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Shadow Eval</title>
+<meta name="description" content="Is your AI agent ready to go live? Shadow-mode readiness evaluator: compare agent and human decisions, cost-weighted, with guardrails and a go-live verdict.">
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#fff; --ink:#1c1d1f; --muted:#5e6168; --line:#e3e3df; --accent:#3b5bdb; --accent-ink:#fff;
+  --go:#1f7a4d; --go-bg:#e5f4ec; --guard:#9a6200; --guard-bg:#fbf0d9; --nogo:#b42318; --nogo-bg:#fde8e6; --na:#5e6168; --na-bg:#eceeef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135; --accent:#8ea2ff; --accent-ink:#10131a;
+    --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12; --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135; --accent:#8ea2ff; --accent-ink:#10131a;
+  --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12; --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+main{max-width:1040px;margin:0 auto;padding:40px 16px 72px}
+h1{font-size:clamp(28px,5vw,42px);line-height:1.15;margin:0 0 12px;letter-spacing:-.02em}
+h2{font-size:21px;margin:48px 0 6px} h3{font-size:16px;margin:0 0 6px}
+.lede{font-size:18px;color:var(--muted);max-width:720px}
+.muted{color:var(--muted)} .small{font-size:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}
+.two{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.kpi .v{font-size:28px;font-weight:650;letter-spacing:-.01em} .kpi .l{color:var(--muted);font-size:14px}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px;white-space:nowrap}
+.go{background:var(--go-bg);color:var(--go)} .guard{background:var(--guard-bg);color:var(--guard)}
+.nogo{background:var(--nogo-bg);color:var(--nogo)} .na{background:var(--na-bg);color:var(--na)}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0 0}
+.steps{counter-reset:s;display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.steps .card::before{counter-increment:s;content:counter(s);display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:13px;margin-bottom:8px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.dec{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+label{display:block;font-size:14px;color:var(--muted)}
+input,select{width:100%;margin-top:4px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.checks label{display:flex;gap:8px;align-items:center;color:var(--ink)} .checks input{width:auto;margin:0}
+.form{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+#result{margin-top:16px;border-left:4px solid var(--accent)}
+details summary{cursor:pointer}
+footer{margin-top:56px;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<main>
+{% macro chip(r) -%}{%- set cls = {'GO':'go','GO WITH GUARDRAILS':'guard','NO-GO':'nogo'}.get(r.value, 'na') -%}<span class="chip {{ cls }}">{{ r.value }}</span>{%- endmacro %}
+
+<header>
+  <p class="muted small">Open source · runs with Ollama, Hugging Face or Claude · free offline demo</p>
+  <h1>Is your AI agent ready to go live?</h1>
+  <p class="lede">Shadow Eval runs your agent alongside your team on real cases. The agent records what it <em>would</em> do and never acts. Shadow Eval then works out who was right, what each mistake would cost, and whether each segment is ready.</p>
+  <div class="cta">
+    <a class="btn primary" href="report.html">Open the readiness report</a>
+    <a class="btn" href="#try">Try a claim</a>
+    <a class="btn" href="{{ repo_url }}">Code on GitHub</a>
+  </div>
+</header>
+
+<h2>Demo result: {{ chip(sc.readiness) }}</h2>
+<p class="muted">{{ headline }} {{ m.n }} synthetic insurance claims, simulated agent and expert.</p>
+<div class="grid">
+  <div class="card kpi"><div class="v">{{ m.accuracy | pct }}</div><div class="l">Agent accuracy (95% CI {{ m.acc_low | pct(0) }}–{{ m.acc_high | pct(0) }})</div></div>
+  <div class="card kpi"><div class="v">{{ m.critical }}</div><div class="l">Critical errors ({{ m.critical_rate | pct }})</div></div>
+  <div class="card kpi"><div class="v">{{ m.human_errors }}</div><div class="l">Team mistakes the agent got right</div></div>
+  <div class="card kpi"><div class="v">{{ m.agreement_rate | pct }}</div><div class="l">Agent agrees with the team</div></div>
+</div>
+<div class="two" style="margin-top:16px">
+{% for dim, segs in sc.segments.items() %}
+  <div class="card table-wrap"><table>
+    <thead><tr><th>{{ dim.replace('_',' ') }}</th><th class="n">Cases</th><th class="n">Accuracy</th><th>Verdict</th></tr></thead>
+    <tbody>{% for s in segs %}<tr><td>{{ s.value }}</td><td class="n">{{ s.metrics.n }}</td><td class="n">{{ s.metrics.accuracy | pct }}</td><td>{{ chip(s.readiness) }}{% if s.guardrail %} <span class="muted small">conf ≥ {{ s.guardrail.threshold | pct(0) }}</span>{% endif %}</td></tr>{% endfor %}</tbody>
+  </table></div>
+{% endfor %}
+</div>
+
+<h2>How it works</h2>
+<div class="steps" style="margin-top:12px">
+  <div class="card"><h3>Shadow</h3><p class="muted small">The agent decides every case the team decides, from past records or live traffic. Nothing is executed.</p></div>
+  <div class="card"><h3>Compare</h3><p class="muted small">Field-by-field matching with tolerances. Every disagreement is weighted by what that mistake would cost.</p></div>
+  <div class="card"><h3>Adjudicate</h3><p class="muted small">A blind AI reviewer suggests who was right; an expert confirms. A sample of agreements is spot-checked too.</p></div>
+  <div class="card"><h3>Decide</h3><p class="muted small">Each segment gets GO, GO WITH GUARDRAILS or NO-GO, using confidence intervals, with confidence-threshold guardrails.</p></div>
+</div>
+
+<h2 id="try">Try a claim</h2>
+<p class="muted">Enter a claim. You'll see the policy-correct decision and how the agent performed on similar claims during the shadow run.</p>
+<div class="card">
+  <form id="claim" class="form" onsubmit="decide(event)">
+    <label>Policy type<select name="policy_type"><option>travel</option><option>auto</option><option>home</option></select></label>
+    <label>Claim type<select name="claim_type">
+      <option>medical_abroad</option><option>trip_cancellation</option><option>lost_baggage</option>
+      <option>collision</option><option>theft</option><option>windshield</option><option>water_damage</option><option>fire</option></select></label>
+    <label>Claim amount ($)<input name="claim_amount" type="number" value="4800" min="0" step="any"></label>
+    <label>Coverage limit ($)<input name="coverage_limit" type="number" value="10000" min="0" step="any"></label>
+    <label>Deductible ($)<input name="deductible" type="number" value="100" min="0" step="any"></label>
+    <label>Days since policy start<input name="days_since_policy_start" type="number" value="400" min="0"></label>
+    <label>Prior claims (12 months)<input name="prior_claims_12m" type="number" value="0" min="0"></label>
+    <label>Days from incident to report<input name="reported_delay_days" type="number" value="5" min="0"></label>
+    <div class="checks" style="display:grid;gap:6px;align-content:center">
+      <label><input type="checkbox" name="policy_active" checked> Policy active</label>
+      <label><input type="checkbox" name="documents_complete" checked> Documents complete</label>
+      <label><input type="checkbox" name="police_report"> Police report</label>
+    </div>
+    <div style="align-self:end"><button class="btn primary" type="submit">Decide</button></div>
+  </form>
+  <div id="result" class="card" hidden></div>
+</div>
+
+<h2>From the review queue</h2>
+<p class="muted">The most costly disagreements between the agent and the team, and who turned out to be right.</p>
+<div class="card table-wrap"><table>
+  <thead><tr><th>Case</th><th>Agent</th><th>Team</th><th>Who was right</th></tr></thead>
+  <tbody>
+  {% for r in review %}
+    <tr><td><strong>{{ r.case_id }}</strong><br><span class="muted small">{{ r.segments }}</span></td>
+      <td class="dec">{{ r.agent.action }}{% if r.agent.action == 'approve' %} ${{ r.agent.payout | num(0) }}{% endif %}<br><span class="muted small">conf {{ r.agent_conf | pct(0) }}</span></td>
+      <td class="dec">{{ r.human.action }}{% if r.human.action == 'approve' %} ${{ r.human.payout | num(0) }}{% endif %}</td>
+      <td>{% if r.who_right == 'agent' %}<span class="chip go">agent</span>{% elif r.who_right == 'team' %}<span class="chip nogo">team</span>{% else %}<span class="chip na">{{ r.verdict }}</span>{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+
+<h2>Run it yourself</h2>
+<div class="card">
+<pre class="dec" style="white-space:pre-wrap;margin:0">git clone {{ repo_url }} && cd shadow-eval
+pip install -e .
+shadow demo --serve            # free, offline: review UI, dashboard, report
+shadow run --agent ollama      # or: --agent hf | --agent claude | your own agent</pre>
+</div>
+
+<footer>Shadow Eval · MIT licensed · Demo data is synthetic; the agent and expert in this demo are simulated. · <a href="{{ repo_url }}">GitHub</a></footer>
+</main>
+
+<script>
+const STATS = {{ stats_json | safe }};
+const COSTS = {{ cost_json | safe }};
+const COVERAGE = {auto:["collision","theft","windshield"], home:["water_damage","fire","theft"], travel:["trip_cancellation","lost_baggage","medical_abroad"]};
+
+function policy(c){
+  if(!c.policy_active) return ["deny",0,"Rule 1: policy is not active"];
+  if(!COVERAGE[c.policy_type].includes(c.claim_type)) return ["deny",0,`Rule 2: ${c.claim_type} is not covered by a ${c.policy_type} policy`];
+  if(!c.documents_complete) return ["request_info",0,"Rule 3: required documents are missing"];
+  const s=[];
+  if(c.days_since_policy_start<30 && c.claim_amount>5000) s.push("new policy (<30 days) with claim over $5,000");
+  if(c.prior_claims_12m>=3) s.push(`${c.prior_claims_12m} prior claims in 12 months`);
+  if(c.claim_type==="theft" && !c.police_report) s.push("theft without a police report");
+  if(c.reported_delay_days>60) s.push(`reported ${c.reported_delay_days} days after the incident`);
+  if(s.length) return ["flag_fraud",0,"Rule 4: fraud signal: "+s.join("; ")];
+  if(c.claim_amount>25000) return ["escalate",0,"Rule 5: claim over $25,000 needs a senior adjuster"];
+  const p=Math.round((Math.min(c.claim_amount,c.coverage_limit)-c.deductible)*100)/100;
+  if(p<=0) return ["deny",0,"Rule 6: claim is below the deductible"];
+  return ["approve",p,`Rule 6: covered: min(claim, limit) − deductible = $${p.toLocaleString()}`];
+}
+
+function esc(s){return String(s).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));}
+
+function decide(e){
+  e.preventDefault();
+  const f=new FormData(e.target), c={};
+  for(const k of ["policy_type","claim_type"]) c[k]=f.get(k);
+  for(const k of ["claim_amount","coverage_limit","deductible","days_since_policy_start","prior_claims_12m","reported_delay_days"]) c[k]=Number(f.get(k)||0);
+  for(const k of ["policy_active","documents_complete","police_report"]) c[k]=f.get(k)==="on";
+  const [action,payout,rule]=policy(c);
+  const st=STATS[`${c.claim_type}|${action}`];
+  let perf="<p class='muted small'>No similar claims in the shadow run.</p>";
+  if(st){
+    const acc=st.correct/st.n;
+    const tone=acc>=0.95?"go":(acc>=0.85?"guard":"nogo");
+    perf=`<p><span class="chip ${tone}">${(acc*100).toFixed(0)}% right</span> In shadow mode the agent decided ${st.n} similar claims (${esc(c.claim_type)} → ${esc(action)}) and got ${st.correct} right.</p>`
+      + (st.top_mistake?`<p class="muted small">Most common mistake on these: <strong>${esc(st.top_mistake.toLowerCase())}</strong> (${st.top_mistake_n}×).</p>`:"");
+  }
+  const r=document.getElementById("result");
+  r.hidden=false;
+  r.innerHTML=`<h3>Correct decision: <span class="dec">${esc(action)}${action==="approve"?" · $"+payout.toLocaleString():""}</span></h3>
+    <p class="muted small">${esc(rule)}</p>${perf}`;
+}
+</script>
+</body>
+</html>

@@ -144,3 +144,13 @@ def test_web_review_flow_and_api(tmp_path, demo):
     assert m["readiness"] in {r.value for r in Readiness}
     assert client.get("/api/audit/verify").json()["ok"]
     assert "Rollout plan" in client.get("/report").text
+
+
+def test_static_site_export(tmp_path, demo):
+    from shadow_eval.static_site import export_static
+
+    store, domain, _ = demo
+    out = export_static(scorecard(store, domain), tmp_path / "site")
+    index = (out / "index.html").read_text()
+    assert "Try a claim" in index and "const STATS" in index and "medical_abroad|approve" in index
+    assert "Rollout plan" in (out / "report.html").read_text()

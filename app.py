@@ -29,6 +29,15 @@ from shadow_eval.demo.simulated import SimulatedAgent  # noqa: E402
 from shadow_eval.models import Decision  # noqa: E402
 from shadow_eval.web.app import create_app  # noqa: E402
 
+try:  # On ZeroGPU Spaces at least one GPU-decorated function must exist. The demo itself runs on CPU.
+    import spaces
+
+    @spaces.GPU
+    def _zerogpu_probe() -> None:
+        return None
+except ImportError:
+    pass
+
 domain = load_domain(DEFAULT_DOMAIN)
 store = build_demo(os.environ.get("SHADOW_DB", "/tmp/shadow_demo.db"), domain)
 agent = SimulatedAgent()

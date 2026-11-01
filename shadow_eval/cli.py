@@ -187,6 +187,30 @@ def serve(
     _serve(store, dom, port, agent=make_agent(agent, dom, model) if agent else None, banner=banner, host=host)
 
 
+@app.command("export-static")
+def export_static_cmd(
+    out: str = typer.Option("site", "--out", "-o", help="Output folder."),
+    demo: bool = typer.Option(False, "--demo", help="Build the offline demo first and export it."),
+    domain: str = DomainOpt,
+    db: str = DbOpt,
+) -> None:
+    """Export a static website (landing page, try-a-claim widget, report). Free to host anywhere."""
+    from .score import scorecard
+    from .static_site import export_static
+
+    if demo:
+        import tempfile
+
+        from .demo.build import DEFAULT_DOMAIN, build_demo
+
+        dom = load_domain(DEFAULT_DOMAIN)
+        store = build_demo(Path(tempfile.mkdtemp()) / "demo.db", dom)
+    else:
+        dom, store = load_domain(domain), Store(db)
+    path = export_static(scorecard(store, dom), out)
+    typer.echo(f"Static site written to {path}/ (index.html, report.html)")
+
+
 @app.command("verify-audit")
 def verify_audit(db: str = DbOpt) -> None:
     """Check the hash-chained audit log for edits or deletions."""

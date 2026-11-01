@@ -217,9 +217,13 @@ docs/               PROBLEM.md · REQUIREMENTS.md · DESIGN.md
 
 ## Deploy the demo
 
-`app.py` runs the offline demo as a free Hugging Face **Gradio** Space: the web app plus an interactive
-"try a claim" page at `/try`. See [`deploy/huggingface/README.md`](deploy/huggingface/README.md).
-Run it locally with `pip install gradio && python app.py`. The `Dockerfile` is there for self-hosting.
+- **Gradio Space**: `app.py` serves the web app plus an interactive "try a claim" page at `/try`
+  (see [`deploy/huggingface/README.md`](deploy/huggingface/README.md)). Run it locally with
+  `pip install gradio && python app.py`.
+- **Static site (free anywhere)**: `shadow export-static --demo --out site` writes a landing page with
+  results, a JavaScript "try a claim" widget and the full report. Host it on GitHub Pages or a free
+  Hugging Face Static Space.
+- **Docker**: the `Dockerfile` is there for self-hosting.
 
 ## License
 
