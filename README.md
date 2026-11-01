@@ -76,6 +76,13 @@ shadow run --agent hf --model Qwen/Qwen2.5-72B-Instruct --db claims.db --limit 5
 
 Free Hugging Face accounts include a small monthly credit for Inference Providers. Use `--limit` to stay inside it.
 
+### Open models from Hugging Face, run locally (free, no API)
+
+```bash
+pip install -e ".[local]"      # torch + transformers; CPU is fine for small models
+shadow run --agent local --model Qwen/Qwen2.5-1.5B-Instruct --db claims.db --limit 20
+```
+
 ### Claude (optional)
 
 ```bash
@@ -188,7 +195,37 @@ realistic weak spots, used so the pipeline can be measured for free.
 | Verdict | GO for auto claims, guardrails for home claims, NO-GO for travel claims (confidently wrong denials of medical claims abroad) |
 | Audit chain | intact; tampering is detected in tests |
 
-Run `pytest` to reproduce these checks: 28 tests, offline.
+Run `pytest` to reproduce these checks: 30 tests, offline.
+
+## Real open-model results
+
+The numbers above measure a *simulated* agent. To test Shadow Eval on a real model, I downloaded an
+open-source model from Hugging Face and ran it **locally on CPU** (`--agent local`, free, no API) in
+shadow mode on 20 demo claims, a stratified sample across auto, home and travel.
+
+| Model | Accuracy (95% CI) | Critical errors | Failed to answer | Avg confidence | Verdict |
+|---|---|---|---|---|---|
+| Qwen2.5-1.5B-Instruct | 21% (9%–43%) | 7 of 19 | 1 | ~0.95 | INSUFFICIENT DATA (n < 30), clearly not ready |
+
+What Shadow Eval caught:
+
+- **Paid what should never be paid.** On a $252 windshield claim below the $500 deductible (correct:
+  deny), the model approved **$20,197**. Its stated reasoning was about escalating to a senior adjuster,
+  which contradicts its own decision.
+- **Missed fraud signals.** On a theft claim with no police report, reported 112 days late (correct:
+  flag for fraud), it approved $12,836.
+- **Arithmetic errors.** It often forgot the deductible, so payouts were off by more than the tolerance.
+- **Broken output.** One answer put arithmetic inside the JSON (`"payout": 12723.76 - 250 = ...`).
+  Shadow Eval records that as a failure, not a crash.
+- **Confidence is useless here.** The model reported about 95% confidence on almost everything, right
+  or wrong, so no confidence-threshold guardrail can rescue it.
+
+Per-claim results: [`docs/results/`](docs/results/). Reproduce with:
+
+```bash
+pip install -e ".[local]"
+python scripts/real_model_run.py --model Qwen/Qwen2.5-1.5B-Instruct --n 20
+```
 
 ## Project layout
 
