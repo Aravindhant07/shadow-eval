@@ -172,3 +172,35 @@ def test_adjudicator_both_wrong_carries_correct_decision(domain):
         claim(), Decision(values={"action": "approve", "payout": 1}), Decision(values={"action": "deny", "payout": 0})
     )
     assert adj.suggested_verdict is Verdict.BOTH_WRONG and adj.suggested_correct == {"action": "flag_fraud", "payout": 0}
+
+
+def test_local_transformers_backend_with_stub_model(domain):
+    torch = pytest.importorskip("torch")
+    from shadow_eval.llm import TransformersBackend
+
+    answer = json.dumps(ANSWER)
+
+    class Tok:
+        eos_token_id = 0
+
+        def apply_chat_template(self, messages, add_generation_prompt, tokenize):
+            assert "exactly these keys" in messages[0]["content"]
+            return "PROMPT"
+
+        def __call__(self, prompt, return_tensors):
+            return {"input_ids": torch.tensor([[1, 2, 3]])}
+
+        def decode(self, ids, skip_special_tokens):
+            assert ids.tolist() == [7, 8]
+            return "```json\n" + answer + "\n```"
+
+    class Model:
+        def generate(self, input_ids, max_new_tokens, do_sample, pad_token_id):
+            assert do_sample is False
+            return torch.tensor([[1, 2, 3, 7, 8]])
+
+    backend = TransformersBackend(model="Qwen/Qwen2.5-1.5B-Instruct")
+    backend._tok, backend._model = Tok(), Model()
+    r = LLMAgent(domain, backend).decide(claim())
+    assert r.decision.values == {"action": "approve", "payout": 3500.0}
+    assert r.input_tokens == 3 and r.output_tokens == 2 and r.cost_usd == 0

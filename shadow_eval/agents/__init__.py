@@ -4,7 +4,7 @@ __all__ = ["Agent", "AgentError", "AgentResult", "LLMAgent", "decision_schema", 
 
 
 def make_agent(kind: str, domain, model: str | None = None, **kwargs):
-    """Build an agent by name: claude | ollama | hf | simulated."""
+    """Build an agent by name: claude | ollama | hf | local | simulated."""
     from ..llm import make_backend
 
     kind = kind.lower()

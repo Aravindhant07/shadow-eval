@@ -78,7 +78,7 @@ def ingest(
 
 @app.command()
 def run(
-    agent: str = typer.Option("ollama", "--agent", "-a", help="claude | ollama | hf | simulated"),
+    agent: str = typer.Option("ollama", "--agent", "-a", help="claude | ollama | hf | local | simulated"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Model name for the provider."),
     cases: Optional[Path] = typer.Option(None, "--cases"),
     human: Optional[Path] = typer.Option(None, "--human"),

@@ -208,8 +208,66 @@ class HuggingFaceBackend:
         )
 
 
+# -- Local open-source models via Hugging Face transformers ---------------
+
+class TransformersBackend:
+    """Downloads an open model from the Hugging Face Hub and runs it locally.
+
+    Free, offline after the first download, no token or credits needed.
+    `pip install torch transformers` (CPU wheels are fine for small models).
+    """
+
+    def __init__(self, model: str = "Qwen/Qwen2.5-1.5B-Instruct", max_new_tokens: int = 400):
+        self.model_id = model
+        self.max_new_tokens = max_new_tokens
+        self.name = f"local:{model}"
+        self._tok = None
+        self._model = None
+        import threading
+
+        self._lock = threading.Lock()  # one generation at a time
+
+    def _load(self) -> None:
+        if self._model is not None:
+            return
+        try:
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+        except ImportError as e:  # pragma: no cover
+            raise LLMError("Install the local extra: pip install 'shadow-eval[local]'") from e
+        self._tok = AutoTokenizer.from_pretrained(self.model_id)
+        self._model = AutoModelForCausalLM.from_pretrained(self.model_id, torch_dtype="auto")
+        self._model.eval()
+
+    def complete(self, system: str, user: str, schema: dict[str, Any]) -> LLMResult:
+        import torch
+
+        keys = ", ".join(
+            f'"{k}"' + (f" (one of: {', '.join(v['enum'])})" if "enum" in v else f" ({v.get('type')})")
+            for k, v in schema.get("properties", {}).items()
+        )
+        sys_prompt = f"{system}\n\nRespond with ONLY a JSON object with exactly these keys: {keys}."
+        with self._lock:
+            self._load()
+            assert self._tok is not None and self._model is not None
+            prompt = self._tok.apply_chat_template(
+                [{"role": "system", "content": sys_prompt}, {"role": "user", "content": user}],
+                add_generation_prompt=True,
+                tokenize=False,
+            )
+            inputs = self._tok(prompt, return_tensors="pt")
+            with torch.inference_mode():
+                out = self._model.generate(
+                    **inputs, max_new_tokens=self.max_new_tokens, do_sample=False, pad_token_id=self._tok.eos_token_id
+                )
+            new = out[0][inputs["input_ids"].shape[1]:]
+            text = self._tok.decode(new, skip_special_tokens=True)
+        return LLMResult(parse_json_object(text), self.model_id, int(inputs["input_ids"].shape[1]), int(len(new)), 0.0)
+
+
 def make_backend(provider: str, model: str | None = None, **kwargs: Any) -> JSONBackend:
     provider = provider.lower()
+    if provider in ("local", "transformers"):
+        return TransformersBackend(model=model or "Qwen/Qwen2.5-1.5B-Instruct", **kwargs)
     if provider == "claude":
         return ClaudeBackend(model=model or "claude-opus-5-5", **kwargs)
     if provider == "ollama":
