@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Readiness: Qwen/Qwen2.5-3B-Instruct on 20 claims</title>
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#ffffff; --ink:#1c1d1f; --muted:#5e6168; --line:#e3e3df;
+  --go:#1f7a4d; --go-bg:#e5f4ec; --guard:#9a6200; --guard-bg:#fbf0d9;
+  --nogo:#b42318; --nogo-bg:#fde8e6; --na:#5e6168; --na-bg:#eceeef; --accent:#3b5bdb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135;
+    --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12;
+    --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31; --accent:#8ea2ff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135;
+  --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12;
+  --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31; --accent:#8ea2ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:18px;margin:40px 0 12px}
+h3{font-size:15px;margin:0 0 4px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.banner{border-radius:10px;padding:10px 14px;margin:16px 0;background:var(--guard-bg);color:var(--guard);font-size:14px}
+.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.hero p{margin:6px 0 0;font-size:17px}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px;white-space:nowrap}
+.chip.big{font-size:15px;padding:8px 16px}
+.go{background:var(--go-bg);color:var(--go)} .guard{background:var(--guard-bg);color:var(--guard)}
+.nogo{background:var(--nogo-bg);color:var(--nogo)} .na{background:var(--na-bg);color:var(--na)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.kpi .v{font-size:26px;font-weight:650;letter-spacing:-.01em}
+.kpi .l{color:var(--muted);font-size:13px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.rec{border-left:4px solid var(--line)}
+.rec.go{border-left-color:var(--go);background:var(--surface);color:var(--ink)}
+.rec.guard{border-left-color:var(--guard);background:var(--surface);color:var(--ink)}
+.rec.nogo{border-left-color:var(--nogo);background:var(--surface);color:var(--ink)}
+.rec.warn{border-left-color:var(--guard)} .rec.info{border-left-color:var(--accent)}
+.rec p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.risk{margin-bottom:12px}
+.risk .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dec{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.plan li{margin:6px 0}
+.bar{height:10px;border-radius:5px;background:var(--line);position:relative;min-width:120px}
+.bar span{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--accent)}
+details summary{cursor:pointer;color:var(--muted)}
+footer{margin-top:48px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+
+
+
+<header>
+  <div class="muted small">Shadow-mode readiness report · 01 Nov 2026, 13:34 UTC</div>
+  <h1>Readiness: Qwen/Qwen2.5-3B-Instruct on 20 claims</h1>
+  <div class="muted">First-notice-of-loss claims triage for a property &amp; casualty insurer.</div>
+</header>
+
+
+
+<section class="card" style="margin-top:20px">
+  <div class="hero">
+    <span class="chip na big">INSUFFICIENT DATA</span>
+    <div>
+      <strong style="font-size:20px">Not enough shadow data to decide yet.</strong>
+      <p class="muted">Based on 20 cases the agent decided in shadow mode alongside the team. Agent: local:Qwen/Qwen2.5-3B-Instruct.</p>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="card kpi"><div class="v">15.0%</div><div class="l">Agent accuracy · 95% CI 5.2%–36.0%</div></div>
+    <div class="card kpi"><div class="v">4</div><div class="l">Critical errors (20.0% of cases)</div></div>
+    <div class="card kpi"><div class="v">505</div><div class="l">Error cost per 100 cases (≈ $50,500)</div></div>
+    <div class="card kpi"><div class="v">4</div><div class="l">Team mistakes the agent got right (≈ $3,400)</div></div>
+  </div>
+</section>
+
+<h2>Readiness by segment</h2>
+
+<div class="card table-wrap" style="margin-bottom:12px">
+  <table>
+    <thead><tr>
+      <th>policy type</th><th class="n">Cases</th><th class="n">Accuracy (95% CI)</th>
+      <th class="n">Critical</th><th class="n">Cost / 100</th><th>Verdict</th><th>Guardrail</th>
+    </tr></thead>
+    <tbody>
+    
+      <tr>
+        <td><strong>auto</strong></td>
+        <td class="n">7</td>
+        <td class="n">14.3% <span class="muted small">(3%–51%)</span></td>
+        <td class="n">28.6%</td>
+        <td class="n">586</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 7 scored cases (need 30)</span></td>
+      </tr>
+    
+      <tr>
+        <td><strong>home</strong></td>
+        <td class="n">7</td>
+        <td class="n">28.6% <span class="muted small">(8%–64%)</span></td>
+        <td class="n">0.0%</td>
+        <td class="n">243</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 7 scored cases (need 30)</span></td>
+      </tr>
+    
+      <tr>
+        <td><strong>travel</strong></td>
+        <td class="n">6</td>
+        <td class="n">0.0% <span class="muted small">(0%–39%)</span></td>
+        <td class="n">33.3%</td>
+        <td class="n">717</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 6 scored cases (need 30)</span></td>
+      </tr>
+    
+    </tbody>
+  </table>
+</div>
+
+<div class="card table-wrap" style="margin-bottom:12px">
+  <table>
+    <thead><tr>
+      <th>value band</th><th class="n">Cases</th><th class="n">Accuracy (95% CI)</th>
+      <th class="n">Critical</th><th class="n">Cost / 100</th><th>Verdict</th><th>Guardrail</th>
+    </tr></thead>
+    <tbody>
+    
+      <tr>
+        <td><strong>&lt; $2k</strong></td>
+        <td class="n">11</td>
+        <td class="n">0.0% <span class="muted small">(0%–26%)</span></td>
+        <td class="n">36.4%</td>
+        <td class="n">745</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 11 scored cases (need 30)</span></td>
+      </tr>
+    
+      <tr>
+        <td><strong>$2k–10k</strong></td>
+        <td class="n">5</td>
+        <td class="n">40.0% <span class="muted small">(12%–77%)</span></td>
+        <td class="n">0.0%</td>
+        <td class="n">140</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 5 scored cases (need 30)</span></td>
+      </tr>
+    
+      <tr>
+        <td><strong>$10k–25k</strong></td>
+        <td class="n">2</td>
+        <td class="n">50.0% <span class="muted small">(9%–91%)</span></td>
+        <td class="n">0.0%</td>
+        <td class="n">200</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 2 scored cases (need 30)</span></td>
+      </tr>
+    
+      <tr>
+        <td><strong>&gt; $25k</strong></td>
+        <td class="n">2</td>
+        <td class="n">0.0% <span class="muted small">(0%–66%)</span></td>
+        <td class="n">0.0%</td>
+        <td class="n">400</td>
+        <td><span class="chip na">INSUFFICIENT DATA</span></td>
+        <td class="small"><span class="muted">only 2 scored cases (need 30)</span></td>
+      </tr>
+    
+    </tbody>
+  </table>
+</div>
+
+
+<h2>Recommendations</h2>
+<div class="recs">
+
+  <div class="card rec info"><h3>Use the agent as a second pair of eyes</h3><p>Where they disagreed, the agent was right 4 times when the team was wrong (about $3,400 of avoidable cost). Even outside autonomous segments, flagging disagreements for review catches real mistakes.</p></div>
+
+</div>
+
+<h2>Top risks: the agent's most costly mistakes</h2>
+
+
+<div class="card risk">
+  <div class="row">
+    <strong>CLM-10000</strong>
+    <span class="chip nogo">critical</span>
+    <span class="chip na">Paid an uncovered claim</span>
+    <span class="muted small">auto · &lt; $2k · agent confidence 95%</span>
+  </div>
+  <p class="muted small" style="margin:8px 0">Stone chip on the highway cracked the windshield across the driver&#39;s side. Police report attached.</p>
+  <div class="small">Agent: <span class="dec">action=approve · payout=20,000.00</span><br>Correct: <span class="dec">action=deny · payout=0.00</span></div>
+  <div class="small muted" style="margin-top:6px">Agent's reasoning: “The claim is for a windshield, which is covered under the auto policy. The claim amount is $251.97, below the deductible of $500, so the payout is calculated as min(claim_amount, coverage_limit) - deductible = 251.97 - 500 = -248.03. Since the payout is below zero, we deny the claim. However, due to the low claim amount, the payout is set to 0.”</div>
+</div>
+
+<div class="card risk">
+  <div class="row">
+    <strong>CLM-10025</strong>
+    <span class="chip nogo">critical</span>
+    <span class="chip na">Paid an uncovered claim</span>
+    <span class="muted small">travel · &lt; $2k · agent confidence 95%</span>
+  </div>
+  <p class="muted small" style="margin:8px 0">Checked bag lost by the airline on a connecting flight.</p>
+  <div class="small">Agent: <span class="dec">action=approve · payout=18,750.00</span><br>Correct: <span class="dec">action=deny · payout=0.00</span></div>
+  <div class="small muted" style="margin-top:6px">Agent's reasoning: “The claim is for lost baggage under travel insurance, which is covered. The claim amount is within the coverage limit, and there are no fraud signals or high-value claims. The payout is calculated as min(claim_amount, coverage_limit) - deductible.”</div>
+</div>
+
+<div class="card risk">
+  <div class="row">
+    <strong>CLM-10007</strong>
+    <span class="chip nogo">critical</span>
+    <span class="chip na">Paid an uncovered claim</span>
+    <span class="muted small">auto · &lt; $2k · agent confidence 90%</span>
+  </div>
+  <p class="muted small" style="margin:8px 0">Stone chip on the highway cracked the windshield across the driver&#39;s side.</p>
+  <div class="small">Agent: <span class="dec">action=approve · payout=3,700.16</span><br>Correct: <span class="dec">action=deny · payout=0.00</span></div>
+  <div class="small muted" style="margin-top:6px">Agent's reasoning: “The claim is for a windshield, which is covered under the auto policy. The claim amount is $423.16, below the deductible of $500, so the payout is calculated as min(claim_amount, coverage_limit) - deductible = 423.16 - 500 = -76.84. Since the payout is below zero, it is considered denied. However, due to the low claim amount, we consider it as a borderline case and approve it with a payout of 0.”</div>
+</div>
+
+<div class="card risk">
+  <div class="row">
+    <strong>CLM-10012</strong>
+    <span class="chip nogo">critical</span>
+    <span class="chip na">Paid an uncovered claim</span>
+    <span class="muted small">travel · &lt; $2k · agent confidence 90%</span>
+  </div>
+  <p class="muted small" style="margin:8px 0">Checked bag lost by the airline on a connecting flight.</p>
+  <div class="small">Agent: <span class="dec">action=approve · payout=9,750.00</span><br>Correct: <span class="dec">action=deny · payout=0.00</span></div>
+  <div class="small muted" style="margin-top:6px">Agent's reasoning: “The claim is for lost baggage which is covered under travel insurance. The claim amount is within the coverage limit, there are no missing documents, no fraud signals, and it is not a high-value claim. The payout is calculated as min(claim_amount, coverage_limit) - deductible.”</div>
+</div>
+
+<div class="card risk">
+  <div class="row">
+    <strong>CLM-10017</strong>
+    
+    <span class="chip na">Fraud signal not referred to investigations</span>
+    <span class="muted small">home · &gt; $25k · agent confidence 100%</span>
+  </div>
+  <p class="muted small" style="margin:8px 0">Kitchen fire spread to the dining room; fire service attended.</p>
+  <div class="small">Agent: <span class="dec">action=escalate · payout=0.00</span><br>Correct: <span class="dec">action=flag_fraud · payout=0.00</span></div>
+  <div class="small muted" style="margin-top:6px">Agent's reasoning: “The claim amount is over $25,000, so it needs to be escalated to a senior adjuster.”</div>
+</div>
+
+
+
+<h2>Rollout plan</h2>
+<div class="card"><ul class="plan">
+<li><strong>Always:</strong> Kill switch: return a segment to people if its weekly critical-error rate exceeds 2.0%.</li>
+</ul></div>
+
+<h2>Technical appendix</h2>
+<div class="card">
+  <h3>Does the agent's confidence mean anything?</h3>
+  <p class="muted small">Accuracy by self-reported confidence. If accuracy rises with confidence, a confidence threshold is a usable guardrail.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Confidence</th><th class="n">Cases</th><th>Accuracy</th><th class="n"></th></tr></thead>
+    <tbody>
+    
+      <tr><td>0%–50%</td><td class="n">0</td>
+      <td></td>
+      <td class="n">—</td></tr>
+    
+      <tr><td>50%–70%</td><td class="n">0</td>
+      <td></td>
+      <td class="n">—</td></tr>
+    
+      <tr><td>70%–80%</td><td class="n">0</td>
+      <td></td>
+      <td class="n">—</td></tr>
+    
+      <tr><td>80%–90%</td><td class="n">0</td>
+      <td></td>
+      <td class="n">—</td></tr>
+    
+      <tr><td>90%–100%</td><td class="n">20</td>
+      <td><div class="bar"><span style="width:15.0%"></span></div></td>
+      <td class="n">15.0%</td></tr>
+    
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <h3>Agent vs team</h3>
+  <div class="table-wrap"><table>
+    <tbody>
+      <tr><td>Agreement rate (agent = team)</td><td class="n">15.0%</td></tr>
+      <tr><td>Disagreements · reviewed · unreviewed · ambiguous</td><td class="n">17 · 17 · 0 · 0</td></tr>
+      <tr><td>When they disagreed (reviewed), agent was right</td><td class="n">0.0%</td></tr>
+      <tr><td>Agent accuracy · team accuracy</td><td class="n">15.0% · 80.0%</td></tr>
+      <tr><td>Spot-checked agreements · shared mistakes found</td><td class="n">0 · 0</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <h3>Run</h3>
+  <div class="table-wrap"><table><tbody>
+    <tr><td>Agent</td><td class="n">local:Qwen/Qwen2.5-3B-Instruct</td></tr>
+    <tr><td>Cases decided · failed</td><td class="n">20 · 0</td></tr>
+    <tr><td>Tokens in · out</td><td class="n">14,439 · 2,982</td></tr>
+    <tr><td>Model cost of this evaluation</td><td class="n">$0.00</td></tr>
+    <tr><td>Latency p50 · p95</td><td class="n">107,496 ms · 486,502 ms</td></tr>
+  </tbody></table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <details>
+    <summary>Method and gates</summary>
+    <ul class="small">
+      <li><strong>Correct answer</strong>: when agent and team agree, their shared decision; when they disagree, the expert's verdict (agent wrong / team wrong / both acceptable / both wrong with the correct decision). Unreviewed disagreements assume the team was right.</li>
+      <li><strong>Matching</strong>: action exact; payout within 5.0% or 50.</li>
+      <li><strong>GO gate</strong>: accuracy lower 95% bound ≥ 90%, critical rate ≤ 2.0%, cost ≤ 60 per 100, at least 30 cases.</li>
+      <li><strong>Guardrail</strong>: lowest confidence threshold where the auto-handled slice passes the GO gate and covers ≥ 30% of cases.</li>
+      <li><strong>Spot checks</strong>: 5% of agreements are sent to experts to estimate shared mistakes.</li>
+      <li><strong>Audit</strong>: every case, decision and review is recorded in a hash-chained log; <code>shadow verify-audit</code> detects any edit or deletion.</li>
+    </ul>
+  </details>
+</div>
+
+<footer>Generated by shadow-eval · open-source shadow-mode readiness evaluator</footer>
+</main>
+</body>
+</html>

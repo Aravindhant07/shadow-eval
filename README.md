@@ -201,11 +201,18 @@ Run `pytest` to reproduce these checks: 30 tests, offline.
 
 The numbers above measure a *simulated* agent. To test Shadow Eval on a real model, I downloaded an
 open-source model from Hugging Face and ran it **locally on CPU** (`--agent local`, free, no API) in
-shadow mode on 20 demo claims, a stratified sample across auto, home and travel.
+shadow mode on the same 20 demo claims, a stratified sample across auto, home and travel.
 
-| Model | Accuracy (95% CI) | Critical errors | Failed to answer | Avg confidence | Verdict |
+| Model | Accuracy (95% CI) | Critical errors | Failed to answer | Confidence when right / wrong | Median time per claim (CPU) |
 |---|---|---|---|---|---|
-| Qwen2.5-1.5B-Instruct | 21% (9%–43%) | 7 of 19 | 1 | ~0.95 | INSUFFICIENT DATA (n < 30), clearly not ready |
+| Qwen2.5-1.5B-Instruct | 21% (9%–43%) | 7 of 19 | 1 | 0.96 / 0.94 | 50 s |
+| Qwen2.5-3B-Instruct | 15% (5%–36%) | 4 of 20 | 0 | 0.98 / 0.94 | 107 s |
+
+Both runs are below the 30-case minimum, so the verdict is INSUFFICIENT DATA, but neither model is
+close to ready. **The bigger model is not simply better; it fails differently.** Qwen-3B is less
+accurate but makes fewer critical errors: where Qwen-1.5B *paid* suspected fraud, Qwen-3B *escalated*
+it, a safer mistake. Both get the payout arithmetic wrong (7 of 20 for Qwen-3B). A single accuracy
+number would hide this; Shadow Eval's cost-weighted, critical-error view shows it.
 
 What Shadow Eval caught:
 
@@ -225,6 +232,7 @@ Per-claim results: [`docs/results/`](docs/results/). Reproduce with:
 ```bash
 pip install -e ".[local]"
 python scripts/real_model_run.py --model Qwen/Qwen2.5-1.5B-Instruct --n 20
+python scripts/real_model_run.py --model Qwen/Qwen2.5-3B-Instruct --n 20
 ```
 
 ## Project layout
