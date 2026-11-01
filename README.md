@@ -217,8 +217,9 @@ docs/               PROBLEM.md · REQUIREMENTS.md · DESIGN.md
 
 ## Deploy the demo
 
-The included `Dockerfile` runs the offline demo. It works as a free Hugging Face Space (Docker, CPU basic).
-See [`deploy/huggingface/README.md`](deploy/huggingface/README.md).
+`app.py` runs the offline demo as a free Hugging Face **Gradio** Space: the web app plus an interactive
+"try a claim" page at `/try`. See [`deploy/huggingface/README.md`](deploy/huggingface/README.md).
+Run it locally with `pip install gradio && python app.py`. The `Dockerfile` is there for self-hosting.
 
 ## License
 
