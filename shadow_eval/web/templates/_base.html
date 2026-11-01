@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Shadow Eval{% endblock %}</title>
+<script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#fff; --ink:#1c1d1f; --muted:#5e6168; --line:#e3e3df; --accent:#3b5bdb; --accent-ink:#fff;
+  --go:#1f7a4d; --go-bg:#e5f4ec; --guard:#9a6200; --guard-bg:#fbf0d9; --nogo:#b42318; --nogo-bg:#fde8e6; --na:#5e6168; --na-bg:#eceeef;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135; --accent:#8ea2ff; --accent-ink:#10131a;
+    --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12; --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135; --accent:#8ea2ff; --accent-ink:#10131a;
+  --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12; --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent)}
+nav{background:var(--surface);border-bottom:1px solid var(--line)}
+nav .in{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+nav .brand{font-weight:700;margin-right:auto;color:var(--ink);text-decoration:none}
+nav a.tab{text-decoration:none;color:var(--muted);padding:4px 2px;border-bottom:2px solid transparent}
+nav a.tab.on{color:var(--ink);border-bottom-color:var(--accent)}
+main{max-width:1100px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px} h2{font-size:17px;margin:28px 0 10px} h3{font-size:15px;margin:0 0 6px}
+.muted{color:var(--muted)} .small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.two{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.kpi .v{font-size:24px;font-weight:650} .kpi .l{color:var(--muted);font-size:13px}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px;white-space:nowrap}
+.go{background:var(--go-bg);color:var(--go)} .guard{background:var(--guard-bg);color:var(--guard)}
+.nogo{background:var(--nogo-bg);color:var(--nogo)} .na{background:var(--na-bg);color:var(--na)}
+.banner{background:var(--guard-bg);color:var(--guard);padding:8px 16px;font-size:14px;text-align:center}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.click:hover{background:var(--bg);cursor:pointer}
+.dec{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.btn{display:inline-block;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 12px;font:inherit;cursor:pointer;text-decoration:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.verdicts{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.verdicts label{border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;display:flex;gap:8px;align-items:flex-start}
+.verdicts label:has(input:checked){border-color:var(--accent);outline:2px solid var(--accent)}
+input[type=text],select,textarea,input[type=number]{width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.suggest{border-left:4px solid var(--accent)}
+.filters a{margin-right:12px}
+</style>
+</head>
+<body>
+{% if banner %}<div class="banner">{{ banner }}</div>{% endif %}
+<nav><div class="in">
+  <a class="brand" href="/dashboard">Shadow Eval <span class="muted small">· {{ domain.name.replace('_',' ') }}</span></a>
+  <a class="tab {% if nav=='dashboard' %}on{% endif %}" href="/dashboard">Dashboard</a>
+  <a class="tab {% if nav=='review' %}on{% endif %}" href="/review">Review queue</a>
+  <a class="tab" href="/report" target="_blank" rel="noopener">Readiness report ↗</a>
+  <a class="tab" href="/api/docs">API</a>
+</div></nav>
+<main>{% block body %}{% endblock %}</main>
+</body>
+</html>

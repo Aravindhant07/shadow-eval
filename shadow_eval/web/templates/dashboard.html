@@ -1,0 +1,10 @@
+{% extends "_base.html" %}
+{% block title %}Dashboard · Shadow Eval{% endblock %}
+{% block body %}
+<h1>Shadow-mode dashboard</h1>
+<p class="muted">The agent decides every case alongside the team but never acts. Refreshes every 10 seconds.</p>
+<div hx-get="/partials/stats" hx-trigger="every 10s" hx-swap="innerHTML">
+  {% include "_stats.html" %}
+</div>
+<p style="margin-top:20px"><a class="btn primary" href="/review">Open review queue</a> <a class="btn" href="/report" target="_blank" rel="noopener">Readiness report ↗</a></p>
+{% endblock %}

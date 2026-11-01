@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<style>
+:root{
+  --bg:#f7f7f5; --surface:#ffffff; --ink:#1c1d1f; --muted:#5e6168; --line:#e3e3df;
+  --go:#1f7a4d; --go-bg:#e5f4ec; --guard:#9a6200; --guard-bg:#fbf0d9;
+  --nogo:#b42318; --nogo-bg:#fde8e6; --na:#5e6168; --na-bg:#eceeef; --accent:#3b5bdb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135;
+    --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12;
+    --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31; --accent:#8ea2ff;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --ink:#ececec; --muted:#a3a7ae; --line:#2e3135;
+  --go:#5cc98f; --go-bg:#173326; --guard:#e9b44c; --guard-bg:#3a2d12;
+  --nogo:#f2786d; --nogo-bg:#3d1b18; --na:#a3a7ae; --na-bg:#2a2d31; --accent:#8ea2ff;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+h2{font-size:18px;margin:40px 0 12px}
+h3{font-size:15px;margin:0 0 4px}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.banner{border-radius:10px;padding:10px 14px;margin:16px 0;background:var(--guard-bg);color:var(--guard);font-size:14px}
+.hero{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.hero p{margin:6px 0 0;font-size:17px}
+.chip{display:inline-block;border-radius:999px;padding:3px 10px;font-weight:600;font-size:12px;white-space:nowrap}
+.chip.big{font-size:15px;padding:8px 16px}
+.go{background:var(--go-bg);color:var(--go)} .guard{background:var(--guard-bg);color:var(--guard)}
+.nogo{background:var(--nogo-bg);color:var(--nogo)} .na{background:var(--na-bg);color:var(--na)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.kpi .v{font-size:26px;font-weight:650;letter-spacing:-.01em}
+.kpi .l{color:var(--muted);font-size:13px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.recs{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.rec{border-left:4px solid var(--line)}
+.rec.go{border-left-color:var(--go);background:var(--surface);color:var(--ink)}
+.rec.guard{border-left-color:var(--guard);background:var(--surface);color:var(--ink)}
+.rec.nogo{border-left-color:var(--nogo);background:var(--surface);color:var(--ink)}
+.rec.warn{border-left-color:var(--guard)} .rec.info{border-left-color:var(--accent)}
+.rec p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.risk{margin-bottom:12px}
+.risk .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.dec{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.plan li{margin:6px 0}
+.bar{height:10px;border-radius:5px;background:var(--line);position:relative;min-width:120px}
+.bar span{position:absolute;inset:0 auto 0 0;border-radius:5px;background:var(--accent)}
+details summary{cursor:pointer;color:var(--muted)}
+footer{margin-top:48px;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+{% macro chip(r, big=False) -%}
+  {%- set cls = {'GO':'go','GO WITH GUARDRAILS':'guard','NO-GO':'nogo'}.get(r.value, 'na') -%}
+  <span class="chip {{ cls }}{% if big %} big{% endif %}">{{ r.value }}</span>
+{%- endmacro %}
+{% macro decision(d) -%}
+  <span class="dec">{% for f in decision_fields %}{{ f }}={{ d.values.get(f) | num(2) if (d.values.get(f) is number and d.values.get(f) is not boolean) else d.values.get(f) }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+{%- endmacro %}
+
+<header>
+  <div class="muted small">Shadow-mode readiness report · {{ generated }}</div>
+  <h1>{{ title }}</h1>
+  <div class="muted">{{ sc.domain.description }}</div>
+</header>
+
+{% if sc.provisional %}
+<div class="banner">Provisional: {{ m.unreviewed }} of {{ m.disagreements }} disagreements still await expert review. Until they are reviewed, they assume the team was right.</div>
+{% endif %}
+
+<section class="card" style="margin-top:20px">
+  <div class="hero">
+    {{ chip(sc.readiness, True) }}
+    <div>
+      <strong style="font-size:20px">{{ headline }}</strong>
+      <p class="muted">Based on {{ m.n | num }} cases the agent decided in shadow mode alongside the team. Agent: {{ sc.run.agent_names | join(", ") }}.</p>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="card kpi"><div class="v">{{ m.accuracy | pct }}</div><div class="l">Agent accuracy · 95% CI {{ m.acc_low | pct }}–{{ m.acc_high | pct }}</div></div>
+    <div class="card kpi"><div class="v">{{ m.critical }}</div><div class="l">Critical errors ({{ m.critical_rate | pct }} of cases)</div></div>
+    <div class="card kpi"><div class="v">{{ m.cost_per_100 | num }}</div><div class="l">Error cost per 100 cases{% if money(m.cost_per_100) %} (≈ {{ money(m.cost_per_100) }}){% endif %}</div></div>
+    <div class="card kpi"><div class="v">{{ m.human_errors }}</div><div class="l">Team mistakes the agent got right{% if money(m.human_error_cost) %} (≈ {{ money(m.human_error_cost) }}){% endif %}</div></div>
+  </div>
+</section>
+
+<h2>Readiness by segment</h2>
+{% for dim, segs in sc.segments.items() %}
+<div class="card table-wrap" style="margin-bottom:12px">
+  <table>
+    <thead><tr>
+      <th>{{ dim.replace('_',' ') }}</th><th class="n">Cases</th><th class="n">Accuracy (95% CI)</th>
+      <th class="n">Critical</th><th class="n">Cost / 100</th><th>Verdict</th><th>Guardrail</th>
+    </tr></thead>
+    <tbody>
+    {% for s in segs %}
+      <tr>
+        <td><strong>{{ s.value }}</strong></td>
+        <td class="n">{{ s.metrics.n }}</td>
+        <td class="n">{{ s.metrics.accuracy | pct }} <span class="muted small">({{ s.metrics.acc_low | pct(0) }}–{{ s.metrics.acc_high | pct(0) }})</span></td>
+        <td class="n">{{ s.metrics.critical_rate | pct }}</td>
+        <td class="n">{{ s.metrics.cost_per_100 | num }}</td>
+        <td>{{ chip(s.readiness) }}</td>
+        <td class="small">{% if s.guardrail %}confidence ≥ {{ s.guardrail.threshold | pct(0) }} · covers {{ s.guardrail.coverage | pct(0) }}{% elif s.reasons %}<span class="muted">{{ s.reasons[0] }}</span>{% else %}<span class="muted">none needed</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endfor %}
+
+<h2>Recommendations</h2>
+<div class="recs">
+{% for r in recs %}
+  <div class="card rec {{ r.tone }}"><h3>{{ r.title }}</h3><p>{{ r.body }}</p></div>
+{% endfor %}
+</div>
+
+<h2>Top risks: the agent's most costly mistakes</h2>
+{% if sc.top_risks %}
+{% for r in sc.top_risks[:5] %}
+<div class="card risk">
+  <div class="row">
+    <strong>{{ r.case_id }}</strong>
+    {% if r.agent_cost.critical %}<span class="chip nogo">critical</span>{% endif %}
+    <span class="chip na">{{ r.agent_cost.label }}</span>
+    <span class="muted small">{% for k, v in r.segments.items() %}{{ v }}{% if not loop.last %} · {% endif %}{% endfor %} · agent confidence {{ r.confidence | pct(0) }}</span>
+  </div>
+  {% if summary_field and r.case.get(summary_field) %}<p class="muted small" style="margin:8px 0">{{ r.case.get(summary_field) }}</p>{% endif %}
+  <div class="small">Agent: {{ decision(r.agent) }}<br>Correct: {{ decision(r.truth) }}</div>
+  {% if r.agent.rationale %}<div class="small muted" style="margin-top:6px">Agent's reasoning: “{{ r.agent.rationale }}”</div>{% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="card muted">No agent mistakes found.</div>
+{% endif %}
+
+<h2>Rollout plan</h2>
+<div class="card"><ul class="plan">
+{% for p in plan %}<li><strong>{{ p.phase }}:</strong> {{ p.what }}</li>{% endfor %}
+</ul></div>
+
+<h2>Technical appendix</h2>
+<div class="card">
+  <h3>Does the agent's confidence mean anything?</h3>
+  <p class="muted small">Accuracy by self-reported confidence. If accuracy rises with confidence, a confidence threshold is a usable guardrail.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Confidence</th><th class="n">Cases</th><th>Accuracy</th><th class="n"></th></tr></thead>
+    <tbody>
+    {% for b in sc.calibration %}
+      <tr><td>{{ b.label }}</td><td class="n">{{ b.n }}</td>
+      <td>{% if b.n %}<div class="bar"><span style="width:{{ (b.accuracy*100)|round(1) }}%"></span></div>{% endif %}</td>
+      <td class="n">{% if b.n %}{{ b.accuracy | pct }}{% else %}—{% endif %}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <h3>Agent vs team</h3>
+  <div class="table-wrap"><table>
+    <tbody>
+      <tr><td>Agreement rate (agent = team)</td><td class="n">{{ m.agreement_rate | pct }}</td></tr>
+      <tr><td>Disagreements · reviewed · unreviewed · ambiguous</td><td class="n">{{ m.disagreements }} · {{ m.reviewed }} · {{ m.unreviewed }} · {{ m.ambiguous }}</td></tr>
+      <tr><td>When they disagreed (reviewed), agent was right</td><td class="n">{{ m.agent_right_when_disagreed | pct }}</td></tr>
+      <tr><td>Agent accuracy · team accuracy</td><td class="n">{{ m.accuracy | pct }} · {{ m.human_accuracy | pct }}</td></tr>
+      <tr><td>Spot-checked agreements · shared mistakes found</td><td class="n">{{ m.spot_checked }} · {{ m.shared_errors }}{% if m.shared_error_high is not none %} (≤ {{ m.shared_error_high | pct }} at 95%){% endif %}</td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <h3>Run</h3>
+  <div class="table-wrap"><table><tbody>
+    <tr><td>Agent</td><td class="n">{{ sc.run.agent_names | join(', ') }}</td></tr>
+    <tr><td>Cases decided · failed</td><td class="n">{{ sc.run.decided }} · {{ sc.run.errors }}</td></tr>
+    <tr><td>Tokens in · out</td><td class="n">{{ sc.run.input_tokens | num }} · {{ sc.run.output_tokens | num }}</td></tr>
+    <tr><td>Model cost of this evaluation</td><td class="n">${{ sc.run.cost_usd | num(2) }}</td></tr>
+    <tr><td>Latency p50 · p95</td><td class="n">{{ sc.run.latency_p50_ms | num }} ms · {{ sc.run.latency_p95_ms | num }} ms</td></tr>
+  </tbody></table></div>
+</div>
+
+<div class="card" style="margin-top:12px">
+  <details>
+    <summary>Method and gates</summary>
+    <ul class="small">
+      <li><strong>Correct answer</strong>: when agent and team agree, their shared decision; when they disagree, the expert's verdict (agent wrong / team wrong / both acceptable / both wrong with the correct decision). Unreviewed disagreements assume the team was right.</li>
+      <li><strong>Matching</strong>: {% for f in sc.domain.decision %}{{ f.name }} {% if f.match == 'tolerance' %}within {{ (f.tolerance_pct*100)|round(1) }}% or {{ f.tolerance_abs | num }}{% else %}{{ f.match }}{% endif %}{% if not loop.last %}; {% endif %}{% endfor %}.</li>
+      <li><strong>GO gate</strong>: accuracy lower 95% bound ≥ {{ sc.domain.readiness.min_accuracy | pct(0) }}, critical rate ≤ {{ sc.domain.readiness.max_critical_rate | pct }}, cost ≤ {{ sc.domain.readiness.max_cost_per_100 | num }} per 100, at least {{ sc.domain.readiness.min_cases }} cases.</li>
+      <li><strong>Guardrail</strong>: lowest confidence threshold where the auto-handled slice passes the GO gate and covers ≥ {{ sc.domain.readiness.min_guardrail_coverage | pct(0) }} of cases.</li>
+      <li><strong>Spot checks</strong>: {{ sc.domain.readiness.spot_check_rate | pct(0) }} of agreements are sent to experts to estimate shared mistakes.</li>
+      <li><strong>Audit</strong>: every case, decision and review is recorded in a hash-chained log; <code>shadow verify-audit</code> detects any edit or deletion.</li>
+    </ul>
+  </details>
+</div>
+
+<footer>Generated by shadow-eval · open-source shadow-mode readiness evaluator</footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,32 @@
+{% extends "_base.html" %}
+{% block title %}Review queue · Shadow Eval{% endblock %}
+{% block body %}
+<h1>Review queue</h1>
+<p class="muted">Cases where the agent and the team disagreed, most costly first, plus a random sample of agreements (spot checks) to catch shared mistakes.</p>
+<p class="filters small">
+  <a href="/review?show=pending" {% if show=='pending' %}style="font-weight:700"{% endif %}>Pending ({{ n_pending }})</a>
+  <a href="/review?show=reviewed" {% if show=='reviewed' %}style="font-weight:700"{% endif %}>Reviewed ({{ n_all - n_pending }})</a>
+  <a href="/review?show=all" {% if show=='all' %}style="font-weight:700"{% endif %}>All ({{ n_all }})</a>
+</p>
+{% if items %}
+<div class="card table-wrap"><table>
+  <thead><tr><th>Case</th><th>Type</th><th>Agent</th><th>Team</th><th class="n">Risk</th><th>Suggestion</th><th>Status</th></tr></thead>
+  <tbody>
+  {% for i in items %}
+    {% set adj = i.adjudication %}
+    <tr class="click" onclick="location.href='/review/{{ i.case_id }}'">
+      <td><a href="/review/{{ i.case_id }}">{{ i.case_id }}</a></td>
+      <td>{% if i.kind == 'spot_check' %}<span class="chip na">spot check</span>{% else %}<span class="chip guard">disagreement</span>{% endif %}</td>
+      <td class="dec">{% for f in i.diff.fields %}{% if f.name == domain.primary_field %}{{ f.a }}{% endif %}{% endfor %}</td>
+      <td class="dec">{% for f in i.diff.fields %}{% if f.name == domain.primary_field %}{{ f.b }}{% endif %}{% endfor %}</td>
+      <td class="n">{{ i.risk.cost | num }}{% if i.risk.critical %} <span class="chip nogo">critical</span>{% endif %}</td>
+      <td class="small">{% if adj and adj.suggested_verdict %}{{ VERDICT_LABELS[adj.suggested_verdict] }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td class="small">{% if adj and adj.final_verdict %}<span class="chip go">{{ VERDICT_LABELS[adj.final_verdict] }}</span>{% else %}<span class="muted">pending</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+{% else %}
+<div class="card muted">Nothing here. {% if show=='pending' %}All caught up.{% endif %}</div>
+{% endif %}
+{% endblock %}

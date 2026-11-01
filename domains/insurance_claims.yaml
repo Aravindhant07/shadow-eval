@@ -1,0 +1,79 @@
+# Domain config: insurance claims triage (fictional demo insurer "Northwind Mutual").
+# Everything domain-specific lives here. A new domain = a new YAML file, no code.
+
+name: insurance_claims
+description: First-notice-of-loss claims triage for a property & casualty insurer.
+case_id_field: claim_id
+summary_field: description
+display_fields:
+  - policy_type
+  - claim_type
+  - claim_amount
+  - coverage_limit
+  - deductible
+  - policy_active
+  - documents_complete
+  - police_report
+  - days_since_policy_start
+  - prior_claims_12m
+  - reported_delay_days
+
+policy_file: claims_policy.md
+
+decision:
+  - name: action
+    type: enum
+    values: [approve, deny, request_info, escalate, flag_fraud]
+    description: Triage action for the claim.
+  - name: payout
+    type: number
+    description: Amount to pay in USD. 0 unless the action is approve.
+    match: tolerance
+    tolerance_pct: 0.05   # within 5% ...
+    tolerance_abs: 50     # ... or within $50, whichever is larger
+
+primary_field: action
+
+# Cost of the agent choosing `agent` when `truth` was correct (cost points;
+# 1 point ≈ $100 of handling cost, rework, leakage or complaint risk).
+cost_matrix:
+  - {agent: approve, truth: flag_fraud, cost: 25, critical: true, label: "Paid a suspected fraudulent claim"}
+  - {agent: approve, truth: deny, cost: 15, critical: true, label: "Paid an uncovered claim"}
+  - {agent: approve, truth: escalate, cost: 10, critical: true, label: "High-value claim skipped senior review"}
+  - {agent: approve, truth: request_info, cost: 5, label: "Paid without required documents"}
+  - {agent: deny, truth: approve, cost: 20, critical: true, label: "Wrongly denied a valid claim"}
+  - {agent: deny, truth: "*", cost: 8, label: "Denied instead of routing correctly"}
+  - {agent: flag_fraud, truth: approve, cost: 6, label: "Honest customer flagged for fraud"}
+  - {agent: flag_fraud, truth: "*", cost: 3, label: "Unnecessary fraud referral"}
+  - {agent: request_info, truth: flag_fraud, cost: 6, label: "Fraud signal missed (asked for documents instead)"}
+  - {agent: request_info, truth: "*", cost: 2, label: "Unnecessary document request"}
+  - {agent: escalate, truth: flag_fraud, cost: 4, label: "Fraud signal not referred to investigations"}
+  - {agent: escalate, truth: "*", cost: 1, label: "Unnecessary escalation"}
+default_mismatch_cost: 5
+partial_mismatch_cost: 3   # right action, payout outside tolerance
+cost_unit_value: 100       # $ per cost point, used to express risk in dollars
+
+segments:
+  - name: policy_type
+    field: policy_type
+  - name: value_band
+    field: claim_amount
+    bins: [2000, 10000, 25000]
+    labels: ["< $2k", "$2k–10k", "$10k–25k", "> $25k"]
+
+readiness:
+  min_cases: 30
+  min_accuracy: 0.90
+  max_critical_rate: 0.02
+  max_cost_per_100: 60
+  min_guardrail_coverage: 0.30
+  confidence_level: 0.95
+
+agent:
+  system_prompt: >
+    You are a claims triage agent for Northwind Mutual. Decide each claim by
+    applying the claims policy exactly, rule by rule, in order. Report how
+    confident you are (0 to 1) and cite the policy rule you applied.
+  claude_model: claude-opus-5-5
+  claude_effort: low
+  ollama_model: qwen2.5:7b

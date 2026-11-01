@@ -1,0 +1,79 @@
+{% extends "_base.html" %}
+{% block title %}{{ case.case_id }} · Review{% endblock %}
+{% block body %}
+<p class="small"><a href="/review">← Review queue</a></p>
+<h1>{{ case.case_id }}
+  {% if item and item.kind == 'spot_check' %}<span class="chip na">spot check: agent and team agreed</span>
+  {% else %}<span class="chip guard">disagreement</span>{% endif %}
+  {% if item and item.risk.critical %}<span class="chip nogo">critical if agent is wrong</span>{% endif %}
+</h1>
+{% if domain.summary_field and case.data.get(domain.summary_field) %}<p class="muted">{{ case.data.get(domain.summary_field) }}</p>{% endif %}
+
+<div class="two" style="margin-top:16px">
+  <div class="card">
+    <h3>Case details</h3>
+    <div class="table-wrap"><table><tbody>
+    {% for k in (domain.display_fields or case.data.keys()) %}{% if k in case.data %}
+      <tr><td class="muted">{{ k.replace('_',' ') }}</td><td class="n">{{ case.data[k] }}</td></tr>
+    {% endif %}{% endfor %}
+    </tbody></table></div>
+  </div>
+  <div>
+    <div class="card">
+      <h3>Agent <span class="muted small">· {{ agent.agent_name }}{% if agent.decision.confidence is not none %} · confidence {{ agent.decision.confidence | pct(0) }}{% endif %}</span></h3>
+      <div class="dec">{% for f in domain.decision %}{{ f.name }} = <strong>{{ agent.decision.values.get(f.name) }}</strong>{% if not loop.last %}<br>{% endif %}{% endfor %}</div>
+      {% if agent.decision.rationale %}<p class="small muted">“{{ agent.decision.rationale }}”</p>{% endif %}
+    </div>
+    <div class="card" style="margin-top:12px">
+      <h3>Team <span class="muted small">· {{ human.decided_by }}</span></h3>
+      <div class="dec">{% for f in domain.decision %}{{ f.name }} = <strong>{{ human.decision.values.get(f.name) }}</strong>{% if not loop.last %}<br>{% endif %}{% endfor %}</div>
+      {% if human.decision.rationale %}<p class="small muted">“{{ human.decision.rationale }}”</p>{% endif %}
+    </div>
+    {% if item %}
+    <p class="small muted">{% for f in item.diff.differing %}{{ f.name }} differs{% if f.note %} ({{ f.note }}){% endif %}{% if not loop.last %} · {% endif %}{% endfor %}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if adj and adj.suggested_verdict %}
+<div class="card suggest" style="margin-top:16px">
+  <h3>Suggestion: {{ VERDICT_LABELS[adj.suggested_verdict] }} <span class="muted small">· {{ adj.suggested_by }}</span></h3>
+  <p class="small">{{ adj.suggested_reason }}</p>
+  {% if adj.suggested_correct %}<p class="small dec">Suggested correct decision: {{ adj.suggested_correct }}</p>{% endif %}
+</div>
+{% endif %}
+
+<form method="post" action="/review/{{ case.case_id }}" class="card" style="margin-top:16px">
+  <h3>Your verdict</h3>
+  {% set current = (adj.final_verdict if adj and adj.final_verdict else (adj.suggested_verdict if adj else None)) %}
+  <div class="verdicts">
+    {% for v in Verdict %}
+    <label><input type="radio" name="verdict" value="{{ v.value }}" {% if current == v %}checked{% endif %} required>
+      <span><strong>{{ VERDICT_LABELS[v] }}</strong><br><span class="small muted">{{ {
+        'agent_wrong':'The team was right.',
+        'human_wrong':'The agent was right.',
+        'both_acceptable':'Both comply with policy.',
+        'both_wrong':'Neither did. Enter the correct decision.',
+        'ambiguous':'The policy does not settle it.'}[v.value] }}</span></span></label>
+    {% endfor %}
+  </div>
+  <div class="two" style="margin-top:12px">
+    {% for f in domain.decision %}
+    <label class="small">Correct {{ f.name }} (only for “Both wrong”)
+      {% set pre = (adj.correct_values or adj.suggested_correct or {}).get(f.name) if adj else None %}
+      {% if f.type == 'enum' %}
+        <select name="correct_{{ f.name }}"><option value=""></option>{% for val in f.values %}<option {% if pre == val %}selected{% endif %}>{{ val }}</option>{% endfor %}</select>
+      {% else %}
+        <input type="{{ 'number' if f.type == 'number' else 'text' }}" step="any" name="correct_{{ f.name }}" value="{{ pre if pre is not none else '' }}">
+      {% endif %}
+    </label>
+    {% endfor %}
+  </div>
+  <div class="two" style="margin-top:12px">
+    <label class="small">Reviewer<input type="text" name="reviewer" value="{{ adj.reviewer if adj and adj.reviewer else 'expert' }}"></label>
+    <label class="small">Notes<input type="text" name="notes" value="{{ adj.notes if adj else '' }}"></label>
+  </div>
+  <p style="margin-top:14px"><button class="btn primary" type="submit">Save and go to next</button>
+  {% if adj and adj.final_verdict %}<span class="muted small"> Reviewed by {{ adj.reviewer }} · {{ adj.reviewed_at }}</span>{% endif %}</p>
+</form>
+{% endblock %}

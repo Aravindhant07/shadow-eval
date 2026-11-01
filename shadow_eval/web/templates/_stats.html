@@ -1,0 +1,25 @@
+{% set m = sc.overall.metrics %}
+{% macro chip(r) -%}{%- set cls = {'GO':'go','GO WITH GUARDRAILS':'guard','NO-GO':'nogo'}.get(r.value, 'na') -%}<span class="chip {{ cls }}">{{ r.value }}</span>{%- endmacro %}
+<div class="card" style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+  {{ chip(sc.readiness) }}
+  <div><strong>Overall readiness</strong>{% if sc.provisional %} <span class="muted small">· provisional, {{ m.unreviewed }} disagreements unreviewed</span>{% endif %}</div>
+  <div class="muted small" style="margin-left:auto">{{ counts.cases }} cases · {{ counts.agent_decisions }} agent decisions · {{ counts.human_decisions }} human decisions · {{ counts.audit_log }} audit events</div>
+</div>
+<div class="grid" style="margin-top:12px">
+  <div class="card kpi"><div class="v">{{ m.accuracy | pct }}</div><div class="l">Agent accuracy (95% CI {{ m.acc_low | pct(0) }}–{{ m.acc_high | pct(0) }})</div></div>
+  <div class="card kpi"><div class="v">{{ m.agreement_rate | pct }}</div><div class="l">Agrees with the team</div></div>
+  <div class="card kpi"><div class="v">{{ m.critical }}</div><div class="l">Critical errors ({{ m.critical_rate | pct }})</div></div>
+  <div class="card kpi"><div class="v">{{ m.human_errors }}</div><div class="l">Team mistakes caught by the agent</div></div>
+</div>
+<h2>Segments</h2>
+<div class="two">
+{% for dim, segs in sc.segments.items() %}
+  <div class="card table-wrap"><table>
+    <thead><tr><th>{{ dim.replace('_',' ') }}</th><th class="n">Cases</th><th class="n">Accuracy</th><th>Verdict</th></tr></thead>
+    <tbody>{% for s in segs %}<tr><td>{{ s.value }}</td><td class="n">{{ s.metrics.n }}</td><td class="n">{{ s.metrics.accuracy | pct }}</td><td>{{ chip(s.readiness) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+{% endfor %}
+</div>
+{% if sc.info.awaiting_human or sc.info.awaiting_agent or sc.info.agent_errors %}
+<p class="muted small">Waiting: {{ sc.info.awaiting_human }} cases need a human decision, {{ sc.info.awaiting_agent }} need an agent decision; {{ sc.info.agent_errors }} agent failures.</p>
+{% endif %}

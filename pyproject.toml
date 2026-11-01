@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "shadow-eval"
+version = "0.1.0"
+description = "Shadow-mode readiness evaluator: compare AI agent decisions against human decisions and decide whether the agent is ready to go live."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "pydantic>=2.6",
+  "pyyaml>=6",
+  "jinja2>=3.1",
+  "typer>=0.12",
+  "fastapi>=0.110",
+  "uvicorn>=0.29",
+  "python-multipart>=0.0.9",
+]
+
+[project.optional-dependencies]
+claude = ["anthropic>=2.0"]
+dev = ["pytest>=8", "anthropic>=2.0"]
+
+[project.scripts]
+shadow = "shadow_eval.cli:app"
+
+[tool.setuptools.packages.find]
+include = ["shadow_eval*"]
+
+[tool.setuptools.package-data]
+shadow_eval = ["web/templates/*.html", "templates/*.html"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
